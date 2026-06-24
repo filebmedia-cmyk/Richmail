@@ -122,11 +122,10 @@
 
   <script>
     (function() {
-      var popup = document.getElementById('welcomePopup');
       var hidden = localStorage.getItem('richmail_hide_welcome');
-      if (!hidden) {
-        popup.style.display = 'flex';
-      }
+      if (hidden) return;
+      var popup = document.getElementById('welcomePopup');
+      popup.style.display = 'flex';
     })();
 
     function closeWelcome() {
@@ -137,6 +136,14 @@
       }
       popup.style.display = 'none';
     }
+
+    document.getElementById('dontShowAgain').addEventListener('change', function() {
+      if (this.checked) {
+        localStorage.setItem('richmail_hide_welcome', '1');
+      } else {
+        localStorage.removeItem('richmail_hide_welcome');
+      }
+    });
   </script>
 </body>
 </html>
