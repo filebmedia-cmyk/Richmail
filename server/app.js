@@ -320,7 +320,49 @@ const server = http.createServer(async (req, res) => {
 
       // If text is empty but html exists, extract text from html
       if (!text && html) {
-        text = html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+        // Remove style, script, head tags and their content first
+        var cleanHtml = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+        cleanHtml = cleanHtml.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+        cleanHtml = cleanHtml.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+        cleanHtml = cleanHtml.replace(/<!--[\s\S]*?-->/g, '');
+        // Replace br/p/div with newlines
+        cleanHtml = cleanHtml.replace(/<br\s*\/?>/gi, '\n');
+        cleanHtml = cleanHtml.replace(/<\/p>/gi, '\n');
+        cleanHtml = cleanHtml.replace(/<\/div>/gi, '\n');
+        cleanHtml = cleanHtml.replace(/<\/tr>/gi, '\n');
+        cleanHtml = cleanHtml.replace(/<\/li>/gi, '\n');
+        // Remove all remaining HTML tags
+        cleanHtml = cleanHtml.replace(/<[^>]*>/g, '');
+        // Decode HTML entities
+        cleanHtml = cleanHtml.replace(/&nbsp;/g, ' ');
+        cleanHtml = cleanHtml.replace(/&amp;/g, '&');
+        cleanHtml = cleanHtml.replace(/&lt;/g, '<');
+        cleanHtml = cleanHtml.replace(/&gt;/g, '>');
+        cleanHtml = cleanHtml.replace(/&quot;/g, '"');
+        // Clean whitespace
+        cleanHtml = cleanHtml.replace(/[ \t]+/g, ' ');
+        cleanHtml = cleanHtml.replace(/\n\s*\n/g, '\n\n');
+        text = cleanHtml.trim();
+      }
+
+      // Also clean text if it contains CSS/HTML artifacts
+      if (text.indexOf('@media') > -1 || text.indexOf('{') > -1) {
+        // Text likely contains CSS - re-extract from HTML
+        if (html) {
+          var cleanHtml2 = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+          cleanHtml2 = cleanHtml2.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+          cleanHtml2 = cleanHtml2.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+          cleanHtml2 = cleanHtml2.replace(/<!--[\s\S]*?-->/g, '');
+          cleanHtml2 = cleanHtml2.replace(/<br\s*\/?>/gi, '\n');
+          cleanHtml2 = cleanHtml2.replace(/<\/p>/gi, '\n');
+          cleanHtml2 = cleanHtml2.replace(/<\/div>/gi, '\n');
+          cleanHtml2 = cleanHtml2.replace(/<[^>]*>/g, '');
+          cleanHtml2 = cleanHtml2.replace(/&nbsp;/g, ' ');
+          cleanHtml2 = cleanHtml2.replace(/&amp;/g, '&');
+          cleanHtml2 = cleanHtml2.replace(/[ \t]+/g, ' ');
+          cleanHtml2 = cleanHtml2.replace(/\n\s*\n/g, '\n\n');
+          text = cleanHtml2.trim();
+        }
       }
 
       // If there are image attachments, embed them in HTML

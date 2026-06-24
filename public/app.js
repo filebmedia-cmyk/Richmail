@@ -267,9 +267,41 @@ function showEmailBody(tab) {
     if (!text) {
       // Fallback: extract from HTML
       if (currentEmailData.html) {
-        text = currentEmailData.html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+        var h = currentEmailData.html;
+        h = h.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+        h = h.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+        h = h.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+        h = h.replace(/<!--[\s\S]*?-->/g, '');
+        h = h.replace(/<br\s*\/?>/gi, '\n');
+        h = h.replace(/<\/p>/gi, '\n');
+        h = h.replace(/<\/div>/gi, '\n');
+        h = h.replace(/<[^>]*>/g, '');
+        h = h.replace(/&nbsp;/g, ' ');
+        h = h.replace(/&amp;/g, '&');
+        h = h.replace(/[ \t]+/g, ' ');
+        h = h.replace(/\n\s*\n/g, '\n\n');
+        text = h.trim();
       } else {
         text = '(No text content)';
+      }
+    }
+    // If text still has CSS artifacts, clean from HTML
+    if (text.indexOf('@media') > -1 || text.indexOf('{') > -1) {
+      if (currentEmailData.html) {
+        var h2 = currentEmailData.html;
+        h2 = h2.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+        h2 = h2.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+        h2 = h2.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+        h2 = h2.replace(/<!--[\s\S]*?-->/g, '');
+        h2 = h2.replace(/<br\s*\/?>/gi, '\n');
+        h2 = h2.replace(/<\/p>/gi, '\n');
+        h2 = h2.replace(/<\/div>/gi, '\n');
+        h2 = h2.replace(/<[^>]*>/g, '');
+        h2 = h2.replace(/&nbsp;/g, ' ');
+        h2 = h2.replace(/&amp;/g, '&');
+        h2 = h2.replace(/[ \t]+/g, ' ');
+        h2 = h2.replace(/\n\s*\n/g, '\n\n');
+        text = h2.trim();
       }
     }
     elements.emailBody.textContent = text;
@@ -280,10 +312,21 @@ function showEmailBody(tab) {
     source += 'Subject: ' + currentEmailData.subject + '\n';
     source += 'Date: ' + currentEmailData.date + '\n';
     source += '\n--- Body ---\n\n';
-    // For source, extract clean text from HTML if available
     if (currentEmailData.html) {
-      var cleanText = currentEmailData.html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
-      source += cleanText;
+      var hs = currentEmailData.html;
+      hs = hs.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+      hs = hs.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+      hs = hs.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+      hs = hs.replace(/<!--[\s\S]*?-->/g, '');
+      hs = hs.replace(/<br\s*\/?>/gi, '\n');
+      hs = hs.replace(/<\/p>/gi, '\n');
+      hs = hs.replace(/<\/div>/gi, '\n');
+      hs = hs.replace(/<[^>]*>/g, '');
+      hs = hs.replace(/&nbsp;/g, ' ');
+      hs = hs.replace(/&amp;/g, '&');
+      hs = hs.replace(/[ \t]+/g, ' ');
+      hs = hs.replace(/\n\s*\n/g, '\n\n');
+      source += hs.trim();
     } else {
       source += currentEmailData.body || '';
     }
