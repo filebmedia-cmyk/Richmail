@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TempMail - Disposable Email Service</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>&#9993; TempMail</h1>
+      <p class="subtitle">Disposable Email Service with Custom Domain</p>
+    </header>
+
+    <!-- Email Address Section -->
+    <section class="address-section">
+      <h2>Your Temporary Email Address</h2>
+      <div class="address-box">
+        <input type="text" id="emailAddress" readonly placeholder="Click 'Generate' to get an address">
+        <button id="copyBtn" class="btn btn-copy" title="Copy to clipboard">Copy</button>
+      </div>
+      <div class="address-controls">
+        <div class="domain-select">
+          <label for="domainSelect">Domain:</label>
+          <select id="domainSelect"></select>
+        </div>
+        <button id="generateBtn" class="btn btn-primary">Generate New Address</button>
+      </div>
+      <div class="custom-address">
+        <label for="customUsername">Or use custom username:</label>
+        <div class="custom-input-group">
+          <input type="text" id="customUsername" placeholder="your.name">
+          <span id="customDomainLabel">@domain.com</span>
+          <button id="customBtn" class="btn btn-secondary">Use This</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Inbox Section -->
+    <section class="inbox-section">
+      <div class="inbox-header">
+        <h2>Inbox <span id="emailCount" class="badge">0</span></h2>
+        <div class="inbox-actions">
+          <button id="refreshBtn" class="btn btn-small">&#8635; Refresh</button>
+          <button id="deleteAllBtn" class="btn btn-small btn-danger">&#128465; Delete All</button>
+        </div>
+      </div>
+      <div class="auto-refresh-info">
+        <label><input type="checkbox" id="autoRefresh" checked> Auto-refresh every 5 seconds</label>
+      </div>
+      <div id="emailList" class="email-list">
+        <div class="empty-inbox">
+          <p>&#128236; No emails yet</p>
+          <p class="hint">Waiting for incoming emails...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Email View Modal -->
+    <div id="emailModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button id="backBtn" class="btn btn-small">&larr; Back to Inbox</button>
+          <button id="deleteEmailBtn" class="btn btn-small btn-danger">&#128465; Delete</button>
+        </div>
+        <div class="email-detail">
+          <div class="email-meta">
+            <div class="meta-row"><strong>From:</strong> <span id="emailFrom"></span></div>
+            <div class="meta-row"><strong>To:</strong> <span id="emailTo"></span></div>
+            <div class="meta-row"><strong>Subject:</strong> <span id="emailSubject"></span></div>
+            <div class="meta-row"><strong>Date:</strong> <span id="emailDate"></span></div>
+          </div>
+          <div class="email-body-tabs">
+            <button id="tabText" class="tab-btn active">Text</button>
+            <button id="tabHtml" class="tab-btn">HTML</button>
+            <button id="tabSource" class="tab-btn">Source</button>
+          </div>
+          <div id="emailBody" class="email-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Domain Config Info -->
+    <section class="info-section">
+      <h2>&#9881; Domain Configuration</h2>
+      <div class="info-box">
+        <p><strong>Active Domains:</strong> <span id="activeDomains"></span></p>
+        <p><strong>SMTP Port:</strong> <span id="smtpPort"></span></p>
+        <p><strong>Email Expiry:</strong> <span id="emailExpiry"></span> minutes</p>
+      </div>
+      <div class="setup-guide">
+        <h3>Setup Your Custom Domain:</h3>
+        <ol>
+          <li>Edit <code>config.js</code> and add your domain to the <code>DOMAINS</code> array</li>
+          <li>Set your domain's MX record to point to this server's IP</li>
+          <li>Use port 25 for production (set <code>SMTP_PORT=25</code>)</li>
+          <li>Restart the server</li>
+        </ol>
+        <p class="hint">Or set environment variable: <code>MAIL_DOMAINS=yourdomain.com,other.com</code></p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>TempMail v1.0 &mdash; Disposable Email with Custom Domain Support</p>
+      <p class="hint">Emails auto-delete after the configured expiry time</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
