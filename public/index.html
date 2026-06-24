@@ -103,5 +103,40 @@
   </div>
 
   <script src="app.js"></script>
+
+  <!-- Welcome Popup -->
+  <div id="welcomePopup" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#fff;border-radius:8px;padding:30px;max-width:420px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.3)">
+      <img src="logo.jpg" alt="RichMail" style="width:70px;height:70px;border-radius:50%;margin-bottom:15px">
+      <h2 style="color:#2c3e50;margin-bottom:10px">Selamat Datang di RichMail!</h2>
+      <p style="color:#555;font-size:0.95em;margin-bottom:15px">RichMail adalah layanan email sementara gratis dengan dukungan custom domain. Terima email dari Gmail, Yahoo, Outlook langsung ke inbox Anda.</p>
+      <p style="color:#555;font-size:0.9em;margin-bottom:20px">Gabung grup Telegram kami untuk update, diskusi, dan bantuan:</p>
+      <a href="https://t.me/GrupRichStore" target="_blank" style="display:inline-block;background:#0088cc;color:#fff;padding:12px 25px;border-radius:5px;text-decoration:none;font-size:1em;font-weight:bold;margin-bottom:20px">Gabung Grup Telegram</a>
+      <br>
+      <button onclick="closeWelcome()" style="background:#2c3e50;color:#fff;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;font-size:0.9em;margin-bottom:15px">Tutup</button>
+      <div style="margin-top:10px">
+        <label style="font-size:0.85em;color:#888;cursor:pointer"><input type="checkbox" id="dontShowAgain" style="margin-right:5px">Jangan tampilkan lagi</label>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var popup = document.getElementById('welcomePopup');
+      var hidden = localStorage.getItem('richmail_hide_welcome');
+      if (!hidden) {
+        popup.style.display = 'flex';
+      }
+    })();
+
+    function closeWelcome() {
+      var popup = document.getElementById('welcomePopup');
+      var checkbox = document.getElementById('dontShowAgain');
+      if (checkbox.checked) {
+        localStorage.setItem('richmail_hide_welcome', '1');
+      }
+      popup.style.display = 'none';
+    }
+  </script>
 </body>
 </html>
