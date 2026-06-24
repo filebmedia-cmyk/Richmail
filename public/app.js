@@ -317,6 +317,7 @@ function showEmailBody(tab) {
       hs = hs.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
       hs = hs.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
       hs = hs.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+      hs = hs.replace(/<!--\[if[\s\S]*?<!\[endif\]-->/gi, '');
       hs = hs.replace(/<!--[\s\S]*?-->/g, '');
       hs = hs.replace(/<br\s*\/?>/gi, '\n');
       hs = hs.replace(/<\/p>/gi, '\n');
@@ -324,6 +325,10 @@ function showEmailBody(tab) {
       hs = hs.replace(/<[^>]*>/g, '');
       hs = hs.replace(/&nbsp;/g, ' ');
       hs = hs.replace(/&amp;/g, '&');
+      hs = hs.replace(/\@media[^}]*\{[^}]*(\{[^}]*\}[^}]*)*\}/g, '');
+      hs = hs.replace(/\.[a-zA-Z_-]+\s*\{[^}]*\}/g, '');
+      hs = hs.replace(/#[a-zA-Z_-]+\s*\{[^}]*\}/g, '');
+      hs = hs.replace(/[a-zA-Z]+\s*\{[^}]*\}/g, '');
       hs = hs.replace(/[ \t]+/g, ' ');
       hs = hs.replace(/\n\s*\n/g, '\n\n');
       source += hs.trim();
