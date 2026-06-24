@@ -98,8 +98,8 @@ async function loadDomains() {
 async function loadConfig() {
   const data = await api('/config');
   if (data) {
-    elements.activeDomains.textContent = data.domains.join(', ');
-    elements.emailExpiry.textContent = data.expiryMinutes;
+    if (elements.activeDomains) elements.activeDomains.textContent = data.domains.join(', ');
+    if (elements.emailExpiry) elements.emailExpiry.textContent = data.expiryMinutes;
   }
 }
 
