@@ -217,8 +217,8 @@ async function openEmail(id) {
     elements.emailTo.textContent = data.email.to;
     elements.emailSubject.textContent = data.email.subject;
     elements.emailDate.textContent = new Date(data.email.date).toLocaleString();
-    // Auto show HTML tab if email has images or HTML content
-    if (data.email.html && data.email.html.indexOf('<img') > -1) {
+    // Always show HTML first if available (looks better)
+    if (data.email.html) {
       showEmailBody('html');
     } else {
       showEmailBody('text');
@@ -231,22 +231,32 @@ async function openEmail(id) {
 // Show email body based on tab
 function showEmailBody(tab) {
   if (!currentEmailData) return;
-  // Update active tab
   elements.tabText.classList.toggle('active', tab === 'text');
   elements.tabHtml.classList.toggle('active', tab === 'html');
   elements.tabSource.classList.toggle('active', tab === 'source');
 
-  if (tab === 'text') {
-    elements.emailBody.textContent = currentEmailData.body || '(No text content)';
-  } else if (tab === 'html') {
+  if (tab === 'html') {
     if (currentEmailData.html) {
+      elements.emailBody.style.whiteSpace = 'normal';
       elements.emailBody.innerHTML = currentEmailData.html;
     } else {
-      elements.emailBody.textContent = '(No HTML content)';
+      elements.emailBody.style.whiteSpace = 'pre-wrap';
+      elements.emailBody.textContent = currentEmailData.body || '(No HTML content)';
     }
+  } else if (tab === 'text') {
+    elements.emailBody.style.whiteSpace = 'pre-wrap';
+    // Clean text: remove encoding artifacts
+    var text = currentEmailData.body || '(No text content)';
+    text = text.replace(/=\r?\n/g, '');
+    text = text.replace(/=([0-9A-Fa-f]{2})/g, function(m, hex) {
+      return String.fromCharCode(parseInt(hex, 16));
+    });
+    text = text.replace(/\r\n/g, '\n');
+    elements.emailBody.textContent = text;
   } else {
+    elements.emailBody.style.whiteSpace = 'pre-wrap';
     elements.emailBody.textContent = 
-      `From: ${currentEmailData.from}\nTo: ${currentEmailData.to}\nSubject: ${currentEmailData.subject}\nDate: ${currentEmailData.date}\n\n${currentEmailData.body}`;
+      'From: ' + currentEmailData.from + '\nTo: ' + currentEmailData.to + '\nSubject: ' + currentEmailData.subject + '\nDate: ' + currentEmailData.date + '\n\n' + (currentEmailData.body || '');
   }
 }
 
