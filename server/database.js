@@ -134,11 +134,14 @@ function readDomains() {
   try {
     if (fs.existsSync(DOMAIN_FILE)) {
       const data = fs.readFileSync(DOMAIN_FILE, 'utf-8');
-      return JSON.parse(data);
+      const saved = JSON.parse(data);
+      // Merge with config domains (env var) to prevent loss on restart
+      const allDomains = [...new Set([...config.DOMAINS, ...(saved.domains || [])])];
+      return { domains: allDomains };
     }
   } catch (e) {}
   // Default: use config domains
-  return { domains: config.DOMAINS };
+  return { domains: [...config.DOMAINS] };
 }
 
 function writeDomains(data) {
