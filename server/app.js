@@ -292,9 +292,24 @@ const server = http.createServer(async (req, res) => {
       const text = body.text || '';
       const html = body.html || '';
       const date = body.date || new Date().toISOString();
+      const attachments = body.attachments || [];
 
       if (!to) {
         return sendJSON(res, { error: 'Missing "to" field' }, 400);
+      }
+
+      // If there are image attachments, embed them in HTML
+      let finalHtml = html;
+      if (attachments.length > 0) {
+        let imgHtml = '';
+        attachments.forEach(att => {
+          if (att.contentType && att.contentType.startsWith('image/')) {
+            imgHtml += '<div style="margin:10px 0"><img src="data:' + att.contentType + ';base64,' + att.data + '" style="max-width:100%;height:auto;border-radius:4px" alt="' + (att.filename || 'image') + '"></div>';
+          }
+        });
+        if (imgHtml) {
+          finalHtml = (finalHtml || '') + imgHtml;
+        }
       }
 
       // Save email
@@ -304,11 +319,11 @@ const server = http.createServer(async (req, res) => {
         from: from,
         subject: subject,
         body: text,
-        html: html,
+        html: finalHtml,
         date: date
       });
 
-      console.log(`[WEBHOOK] Email received: ${from} -> ${to} | Subject: ${subject}`);
+      console.log(`[WEBHOOK] Email received: ${from} -> ${to} | Subject: ${subject} | Attachments: ${attachments.length}`);
       return sendJSON(res, { success: true, id: saved.id });
     } catch (e) {
       console.error('[WEBHOOK] Error:', e.message);

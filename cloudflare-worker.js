@@ -12,46 +12,66 @@ export default {
     var raw = await new Response(message.raw).text();
     var body = "";
     var html = "";
-    var idx = raw.indexOf("\r\n\r\n");
-    if (idx === -1) {
-      idx = raw.indexOf("\n\n");
+    var attachments = [];
+
+    function parseParts(content, boundary) {
+      var parts = content.split("--" + boundary);
+      for (var i = 0; i < parts.length; i++) {
+        var part = parts[i];
+        if (part === "" || part === "--" || part.trim() === "--") continue;
+        var headerEnd = part.indexOf("\r\n\r\n");
+        if (headerEnd === -1) headerEnd = part.indexOf("\n\n");
+        if (headerEnd === -1) continue;
+        var partHeaders = part.substring(0, headerEnd).toLowerCase();
+        var partContent = part.substring(headerEnd + 4);
+        partContent = partContent.replace(/\r\n--$/, "").replace(/\n--$/, "").trim();
+        if (partHeaders.indexOf("multipart/") > -1) {
+          var nestedBoundary = partHeaders.match(/boundary="?([^";\s\r\n]+)"?/);
+          if (nestedBoundary) {
+            parseParts(partContent, nestedBoundary[1]);
+          }
+        } else if (partHeaders.indexOf("text/plain") > -1 && !body) {
+          body = partContent;
+        } else if (partHeaders.indexOf("text/html") > -1 && !html) {
+          html = partContent;
+        } else if (partHeaders.indexOf("image/") > -1) {
+          var nameMatch = partHeaders.match(/name="?([^";\r\n]+)"?/);
+          var filename = nameMatch ? nameMatch[1].trim() : "image.png";
+          var ctMatch = part.substring(0, headerEnd).match(/content-type:\s*([^\r\n;]+)/i);
+          var mimeType = ctMatch ? ctMatch[1].trim() : "image/png";
+          var isBase64 = partHeaders.indexOf("base64") > -1;
+          if (isBase64) {
+            var cleanData = partContent.replace(/[\r\n\s]/g, "");
+            attachments.push({
+              filename: filename,
+              contentType: mimeType,
+              data: cleanData
+            });
+          }
+        }
+      }
     }
+
+    var idx = raw.indexOf("\r\n\r\n");
+    if (idx === -1) idx = raw.indexOf("\n\n");
     if (idx > -1) {
       var content = raw.substring(idx + 4);
       if (contentType.indexOf("multipart") > -1) {
         var boundaryMatch = contentType.match(/boundary="?([^";\s]+)"?/);
         if (boundaryMatch) {
-          var boundary = boundaryMatch[1];
-          var parts = content.split("--" + boundary);
-          for (var i = 0; i < parts.length; i++) {
-            var part = parts[i];
-            if (part.indexOf("text/plain") > -1) {
-              var partBody = part.indexOf("\r\n\r\n");
-              if (partBody === -1) partBody = part.indexOf("\n\n");
-              if (partBody > -1) {
-                body = part.substring(partBody + 4).trim();
-                body = body.replace(/--$/, "").trim();
-              }
-            } else if (part.indexOf("text/html") > -1) {
-              var partHtml = part.indexOf("\r\n\r\n");
-              if (partHtml === -1) partHtml = part.indexOf("\n\n");
-              if (partHtml > -1) {
-                html = part.substring(partHtml + 4).trim();
-                html = html.replace(/--$/, "").trim();
-              }
-            }
-          }
+          parseParts(content, boundaryMatch[1]);
         }
       } else if (contentType.indexOf("text/html") > -1) {
         html = content.trim();
-        body = content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
       } else {
         body = content.trim();
       }
     }
+
     if (!body && html) {
       body = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
     }
+
     await fetch(url, {
       method: "POST",
       headers: {
@@ -64,6 +84,7 @@ export default {
         subject: subject,
         text: body,
         html: html,
+        attachments: attachments,
         date: date
       })
     });
