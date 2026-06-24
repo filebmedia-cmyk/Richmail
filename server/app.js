@@ -95,12 +95,13 @@ const server = http.createServer(async (req, res) => {
     
     // GET /api/domains - Get available domains
     if (pathname === '/api/domains' && method === 'GET') {
-      return sendJSON(res, { domains: config.DOMAINS });
+      return sendJSON(res, { domains: db.getDomains() });
     }
 
     // GET /api/generate - Generate random email address
     if (pathname === '/api/generate' && method === 'GET') {
-      const domain = parsedUrl.query.domain || config.DOMAINS[0];
+      const domains = db.getDomains();
+      const domain = parsedUrl.query.domain || domains[0];
       const username = generateUsername();
       const address = `${username}@${domain}`;
       db.getOrCreateMailbox(address);
@@ -115,8 +116,9 @@ const server = http.createServer(async (req, res) => {
       }
       const address = body.address.toLowerCase();
       const domain = address.split('@')[1];
-      if (!config.DOMAINS.includes(domain)) {
-        return sendJSON(res, { error: 'Invalid domain. Available: ' + config.DOMAINS.join(', ') }, 400);
+      const domains = db.getDomains();
+      if (!domains.includes(domain)) {
+        return sendJSON(res, { error: 'Invalid domain. Available: ' + domains.join(', ') }, 400);
       }
       db.getOrCreateMailbox(address);
       return sendJSON(res, { address });
@@ -163,8 +165,75 @@ const server = http.createServer(async (req, res) => {
     // GET /api/config - Get public config info
     if (pathname === '/api/config' && method === 'GET') {
       return sendJSON(res, {
-        domains: config.DOMAINS,
+        domains: db.getDomains(),
         expiryMinutes: config.EMAIL_EXPIRY_MINUTES
+      });
+    }
+
+    return sendJSON(res, { error: 'Not Found' }, 404);
+  }
+
+  // ==========================================
+  // ADMIN API: /admin/*
+  // ==========================================
+  if (pathname.startsWith('/admin/api/')) {
+    // Login doesn't need auth
+    if (pathname === '/admin/api/login' && method === 'POST') {
+      const body = await parseBody(req);
+      if (body.password === config.ADMIN_PASSWORD) {
+        return sendJSON(res, { success: true, token: config.ADMIN_PASSWORD });
+      }
+      return sendJSON(res, { error: 'Wrong password' }, 401);
+    }
+
+    // Verify admin password for all other routes
+    const authHeader = req.headers['authorization'] || '';
+    const token = authHeader.replace('Bearer ', '');
+    if (token !== config.ADMIN_PASSWORD) {
+      return sendJSON(res, { error: 'Unauthorized' }, 401);
+    }
+
+    // GET /admin/api/stats - Dashboard statistics
+    if (pathname === '/admin/api/stats' && method === 'GET') {
+      return sendJSON(res, db.getStats());
+    }
+
+    // GET /admin/api/domains - List all domains
+    if (pathname === '/admin/api/domains' && method === 'GET') {
+      return sendJSON(res, { domains: db.getDomains() });
+    }
+
+    // POST /admin/api/domains - Add a domain
+    if (pathname === '/admin/api/domains' && method === 'POST') {
+      const body = await parseBody(req);
+      if (!body.domain) {
+        return sendJSON(res, { error: 'Domain is required' }, 400);
+      }
+      const domain = body.domain.toLowerCase().trim();
+      if (!/^[a-z0-9][a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) {
+        return sendJSON(res, { error: 'Invalid domain format' }, 400);
+      }
+      const domains = db.addDomain(domain);
+      return sendJSON(res, { success: true, domains });
+    }
+
+    // DELETE /admin/api/domains - Remove a domain
+    if (pathname === '/admin/api/domains' && method === 'DELETE') {
+      const domain = parsedUrl.query.domain;
+      if (!domain) {
+        return sendJSON(res, { error: 'Domain parameter required' }, 400);
+      }
+      const domains = db.removeDomain(domain);
+      return sendJSON(res, { success: true, domains });
+    }
+
+    // GET /admin/api/config - Get full config
+    if (pathname === '/admin/api/config' && method === 'GET') {
+      return sendJSON(res, {
+        domains: db.getDomains(),
+        webhookSecret: config.WEBHOOK_SECRET,
+        emailExpiry: config.EMAIL_EXPIRY_MINUTES,
+        webhookUrl: '/webhook/email'
       });
     }
 

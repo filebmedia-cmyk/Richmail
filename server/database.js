@@ -124,6 +124,76 @@ function cleanupExpired() {
 // Run cleanup every 5 minutes
 setInterval(cleanupExpired, 5 * 60 * 1000);
 
+// ==========================================
+// Domain Management
+// ==========================================
+
+const DOMAIN_FILE = path.resolve(__dirname, '..', config.DOMAIN_CONFIG_PATH);
+
+function readDomains() {
+  try {
+    if (fs.existsSync(DOMAIN_FILE)) {
+      const data = fs.readFileSync(DOMAIN_FILE, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (e) {}
+  // Default: use config domains
+  return { domains: config.DOMAINS };
+}
+
+function writeDomains(data) {
+  fs.writeFileSync(DOMAIN_FILE, JSON.stringify(data, null, 2));
+}
+
+function getDomains() {
+  return readDomains().domains;
+}
+
+function addDomain(domain) {
+  const data = readDomains();
+  domain = domain.toLowerCase().trim();
+  if (!data.domains.includes(domain)) {
+    data.domains.push(domain);
+    writeDomains(data);
+  }
+  return data.domains;
+}
+
+function removeDomain(domain) {
+  const data = readDomains();
+  domain = domain.toLowerCase().trim();
+  data.domains = data.domains.filter(d => d !== domain);
+  writeDomains(data);
+  return data.domains;
+}
+
+// Stats
+function getStats() {
+  const db = readDB();
+  const domains = getDomains();
+  const totalEmails = db.emails.length;
+  const totalMailboxes = db.mailboxes.length;
+  const unreadEmails = db.emails.filter(e => !e.read).length;
+  
+  // Per domain stats
+  const domainStats = domains.map(domain => {
+    const emails = db.emails.filter(e => e.to.endsWith('@' + domain));
+    const mailboxes = db.mailboxes.filter(m => m.address.endsWith('@' + domain));
+    return {
+      domain: domain,
+      emails: emails.length,
+      mailboxes: mailboxes.length
+    };
+  });
+
+  return {
+    totalEmails,
+    totalMailboxes,
+    unreadEmails,
+    domains: domainStats
+  };
+}
+
 module.exports = {
   getOrCreateMailbox,
   saveEmail,
@@ -133,5 +203,9 @@ module.exports = {
   deleteEmail,
   deleteAllEmails,
   cleanupExpired,
-  generateId
+  generateId,
+  getDomains,
+  addDomain,
+  removeDomain,
+  getStats
 };

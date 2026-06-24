@@ -5,7 +5,7 @@
  */
 
 module.exports = {
-  // Your domain(s)
+  // Default domain(s) - can be managed via admin panel
   DOMAINS: process.env.MAIL_DOMAINS 
     ? process.env.MAIL_DOMAINS.split(',') 
     : ['richmail.web.id'],
@@ -17,9 +17,15 @@ module.exports = {
   // Webhook secret (to verify Cloudflare requests)
   WEBHOOK_SECRET: process.env.WEBHOOK_SECRET || 'richmail-secret-key-2026',
 
+  // Admin panel password
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'admin123',
+
   // Email settings
   EMAIL_EXPIRY_MINUTES: parseInt(process.env.EMAIL_EXPIRY || '60'),
 
   // Database (JSON file-based)
-  DB_PATH: process.env.DB_PATH || './data/emails.json'
+  DB_PATH: process.env.DB_PATH || './data/emails.json',
+
+  // Domain config file
+  DOMAIN_CONFIG_PATH: process.env.DOMAIN_CONFIG_PATH || './data/domains.json'
 };
