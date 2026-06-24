@@ -14,6 +14,28 @@ export default {
     var html = "";
     var attachments = [];
 
+    function decodeQuotedPrintable(str) {
+      return str.replace(/=\r?\n/g, "").replace(/=([0-9A-Fa-f]{2})/g, function(m, hex) {
+        return String.fromCharCode(parseInt(hex, 16));
+      });
+    }
+
+    function decodeContent(content, headers) {
+      var encoding = "";
+      var encMatch = headers.match(/content-transfer-encoding:\s*([^\r\n]+)/i);
+      if (encMatch) encoding = encMatch[1].trim().toLowerCase();
+      if (encoding === "quoted-printable") {
+        return decodeQuotedPrintable(content);
+      } else if (encoding === "base64") {
+        try {
+          return atob(content.replace(/[\r\n\s]/g, ""));
+        } catch(e) {
+          return content;
+        }
+      }
+      return content;
+    }
+
     function parseParts(content, boundary) {
       var parts = content.split("--" + boundary);
       for (var i = 0; i < parts.length; i++) {
@@ -22,22 +44,23 @@ export default {
         var headerEnd = part.indexOf("\r\n\r\n");
         if (headerEnd === -1) headerEnd = part.indexOf("\n\n");
         if (headerEnd === -1) continue;
-        var partHeaders = part.substring(0, headerEnd).toLowerCase();
+        var partHeaderStr = part.substring(0, headerEnd);
+        var partHeaders = partHeaderStr.toLowerCase();
         var partContent = part.substring(headerEnd + 4);
-        partContent = partContent.replace(/\r\n--$/, "").replace(/\n--$/, "").trim();
+        partContent = partContent.replace(/\r?\n--$/, "").trim();
         if (partHeaders.indexOf("multipart/") > -1) {
           var nestedBoundary = partHeaders.match(/boundary="?([^";\s\r\n]+)"?/);
           if (nestedBoundary) {
             parseParts(partContent, nestedBoundary[1]);
           }
         } else if (partHeaders.indexOf("text/plain") > -1 && !body) {
-          body = partContent;
+          body = decodeContent(partContent, partHeaderStr);
         } else if (partHeaders.indexOf("text/html") > -1 && !html) {
-          html = partContent;
+          html = decodeContent(partContent, partHeaderStr);
         } else if (partHeaders.indexOf("image/") > -1) {
           var nameMatch = partHeaders.match(/name="?([^";\r\n]+)"?/);
           var filename = nameMatch ? nameMatch[1].trim() : "image.png";
-          var ctMatch = part.substring(0, headerEnd).match(/content-type:\s*([^\r\n;]+)/i);
+          var ctMatch = partHeaderStr.match(/content-type:\s*([^\r\n;]+)/i);
           var mimeType = ctMatch ? ctMatch[1].trim() : "image/png";
           var isBase64 = partHeaders.indexOf("base64") > -1;
           if (isBase64) {
@@ -62,14 +85,14 @@ export default {
           parseParts(content, boundaryMatch[1]);
         }
       } else if (contentType.indexOf("text/html") > -1) {
-        html = content.trim();
+        html = decodeContent(content, raw.substring(0, idx));
       } else {
-        body = content.trim();
+        body = decodeContent(content, raw.substring(0, idx));
       }
     }
 
     if (!body && html) {
-      body = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+      body = html.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
     }
 
     await fetch(url, {
