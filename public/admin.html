@@ -125,15 +125,21 @@
 
       <!-- Setup Guide -->
       <div class="section">
-        <h2>&#128218; Cara Kerja</h2>
+        <h2>&#128218; Cara Tambah Domain Baru</h2>
         <div class="guide-step">
-          <strong>Otomatis:</strong> Ketik domain → klik Tambah → App akan otomatis setup Cloudflare (MX record, Email Routing, dll)
+          <strong>Step 1 (Otomatis):</strong> Ketik domain baru di atas → klik "Tambah & Auto Setup". App otomatis: tambah domain ke Cloudflare, set MX records.
         </div>
         <div class="guide-step">
-          <strong>Manual (hanya sekali):</strong> Ganti nameserver domain ke Cloudflare di panel registrar
+          <strong>Step 2 (Manual):</strong> Ganti nameserver domain di tempat beli domain (Jagoan Hosting/Namecheap/dll) ke nameserver Cloudflare yang ditampilkan setelah setup.
         </div>
         <div class="guide-step">
-          <strong>&#9989; Selesai!</strong> Domain langsung bisa terima email
+          <strong>Step 3 (Manual):</strong> Buka Cloudflare → pilih domain baru → Email → Email Routing → klik <strong>"Enable Email Routing"</strong>
+        </div>
+        <div class="guide-step">
+          <strong>Step 4 (Manual):</strong> Masih di Email Routing → tab "Routing rules" → Catch-all → Edit → pilih <strong>"Send to a Worker"</strong> → pilih <strong>richmail-worker</strong> → Save
+        </div>
+        <div class="guide-step">
+          <strong>&#9989; Selesai!</strong> Tunggu 5-30 menit (propagasi DNS), lalu domain bisa terima email.
         </div>
       </div>
 
