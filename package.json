@@ -4,9 +4,17 @@
   "description": "Temporary Email Application with Custom Domain Support",
   "main": "server/app.js",
   "scripts": {
-    "start": "node server/app.js"
+    "start": "node server/app.js",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
-  "dependencies": {},
-  "keywords": ["temp-mail", "disposable-email", "custom-domain"],
-  "license": "MIT"
+  "keywords": [
+    "temp-mail",
+    "disposable-email",
+    "custom-domain"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^4.105.0"
+  }
 }
